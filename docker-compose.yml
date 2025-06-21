@@ -1,8 +1,7 @@
-version: '3.8'
 services:
   frontend:
     build:
-      context: ../../cim-parent-frontend
+      context: C:/Users/Nikolay/WebstormProjects/cim-parent-frontend
       dockerfile: Dockerfile
     ports:
       - "3000:80"
@@ -33,11 +32,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
   nocodb:
-    image: nocodb/nocodb:latest
+    image: nocodb/nocodb:0.92.4
     ports:
       - "8090:8080"
     environment:
-      NC_DB: postgresql://postgres:postgres@db:5432/cim_nocodb
+      NC_DB: pg://db:5432?u=postgres&p=postgres&d=cim_nocodb
     depends_on:
       - db
 volumes:

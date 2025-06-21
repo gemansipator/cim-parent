@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 /**
- * Модель роли пользователя приложения ЦИМ.
- * Хранит информацию о роли (Admin, Moderator, User).
+ * Модель роли приложения ЦИМ.
  */
 @Data
 @Entity

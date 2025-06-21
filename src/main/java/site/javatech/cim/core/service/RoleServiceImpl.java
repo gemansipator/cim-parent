@@ -8,8 +8,7 @@ import site.javatech.cim.core.repository.RoleRepository;
 import java.util.List;
 
 /**
- * Реализация сервиса для управления ролями приложения ЦИМ.
- * Поддерживает только операции чтения ролей.
+ * Реализация сервиса для управления ролями.
  */
 @Service
 public class RoleServiceImpl implements RoleService {
@@ -17,11 +16,20 @@ public class RoleServiceImpl implements RoleService {
     @Autowired
     private RoleRepository roleRepository;
 
+    /**
+     * Получает список всех ролей.
+     * @return список ролей
+     */
     @Override
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
 
+    /**
+     * Получает роль по имени.
+     * @param name имя роли
+     * @return роль или null, если не найдена
+     */
     @Override
     public Role getRoleByName(String name) {
         return roleRepository.findByName(name).orElse(null);
