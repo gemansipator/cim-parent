@@ -2,9 +2,10 @@ package site.javatech.cim.core.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -17,6 +18,7 @@ public class JwtUtil {
 
     private final String SECRET_KEY = "7x/A3DqZqF3N8JkYh+I2l4v5mQ6bP9Er0cL1tUuVwXyZ";
     private final long EXPIRATION_TIME = 86400000; // 24 часа
+    private final SecretKey signingKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
     /**
      * Извлечь имя пользователя из токена.
@@ -55,7 +57,11 @@ public class JwtUtil {
      * @return Утверждения
      */
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        return Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**
@@ -84,11 +90,11 @@ public class JwtUtil {
      */
     public String generateToken(String username, String[] roles) {
         return Jwts.builder()
-                .setSubject(username)
+                .subject(username)
                 .claim("roles", String.join(",", roles))
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(signingKey)
                 .compact();
     }
 

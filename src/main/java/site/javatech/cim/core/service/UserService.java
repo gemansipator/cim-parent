@@ -1,86 +1,31 @@
 package site.javatech.cim.core.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.model.User;
-import site.javatech.cim.core.repository.RoleRepository;
-import site.javatech.cim.core.repository.UserRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
- * Сервис для управления пользователями.
- * Отвечает за создание, получение и обновление пользователей и их ролей.
+ * Интерфейс сервиса для управления пользователями.
  */
-@Service
-public class UserService {
+public interface UserService extends UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    List<User> getAllUsers();
 
-    @Autowired
-    private RoleRepository roleRepository;
+    User getUserById(Long id);
 
-    /**
-     * Получить список всех пользователей.
-     * @return Список пользователей
-     */
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
+    User getUserByUsername(String username);
 
-    /**
-     * Получить пользователя по идентификатору.
-     * @param id Идентификатор пользователя
-     * @return Пользователь или null, если не найден
-     */
-    public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
-    }
+    User createUser(Map<String, Object> userData);
 
-    /**
-     * Получить пользователя по имени.
-     * @param username Имя пользователя
-     * @return Пользователь
-     */
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
+    User createUser(User user, Set<String> roleNames);
 
-    /**
-     * Создать нового пользователя.
-     * @param user Данные пользователя
-     * @param roleNames Список имен ролей
-     * @return Созданный пользователь
-     */
-    public User createUser(User user, Set<String> roleNames) {
-        Set<Role> roles = roleNames.stream()
-                .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
-                .collect(Collectors.toSet());
-        user.setRoles(roles);
-        return userRepository.save(user);
-    }
+    User assignRoles(Long id, Set<String> roleNames);
 
-    /**
-     * Назначить роли пользователю.
-     * @param id Идентификатор пользователя
-     * @param roleNames Список имен ролей
-     * @return Обновленный пользователь или null, если не найден
-     */
-    public User assignRoles(Long id, Set<String> roleNames) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return null;
-        }
-        Set<Role> roles = roleNames.stream()
-                .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
-                .collect(Collectors.toSet());
-        user.setRoles(roles);
-        return userRepository.save(user);
-    }
+    boolean existsByUsername(String username);
+
+    List<Role> getRolesByUsername(String username);
 }
