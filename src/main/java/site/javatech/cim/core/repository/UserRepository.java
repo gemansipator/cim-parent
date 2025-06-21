@@ -9,10 +9,5 @@ import java.util.Optional;
  * Репозиторий для работы с пользователями.
  */
 public interface UserRepository extends JpaRepository<User, Long> {
-    /**
-     * Найти пользователя по имени.
-     * @param username Имя пользователя
-     * @return Optional с пользователем или пустой, если не найден
-     */
     Optional<User> findByUsername(String username);
 }

@@ -1,47 +1,31 @@
 package site.javatech.cim.core.service;
 
+import org.springframework.security.core.userdetails.UserDetailsService;
+import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.model.User;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Сервис для управления пользователями.
+ * Интерфейс сервиса для управления пользователями.
  */
-public interface UserService {
-    /**
-     * Создать нового пользователя.
-     * @param user Данные пользователя
-     * @param roleNames Список имен ролей
-     * @return Созданный пользователь
-     */
-    User createUser(User user, Set<String> roleNames);
+public interface UserService extends UserDetailsService {
 
-    /**
-     * Получить список всех пользователей.
-     * @return Список пользователей
-     */
     List<User> getAllUsers();
 
-    /**
-     * Получить пользователя по ID.
-     * @param id ID пользователя
-     * @return Пользователь или null, если не найден
-     */
     User getUserById(Long id);
 
-    /**
-     * Получить пользователя по имени.
-     * @param username Имя пользователя
-     * @return Пользователь или null, если не найден
-     */
     User getUserByUsername(String username);
 
-    /**
-     * Назначить роли пользователю.
-     * @param userId ID пользователя
-     * @param roleNames Список имен ролей
-     * @return Обновленный пользователь
-     */
-    User assignRoles(Long userId, Set<String> roleNames);
+    User createUser(Map<String, Object> userData);
+
+    User createUser(User user, Set<String> roleNames);
+
+    User assignRoles(Long id, Set<String> roleNames);
+
+    boolean existsByUsername(String username);
+
+    List<Role> getRolesByUsername(String username);
 }

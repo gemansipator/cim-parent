@@ -15,15 +15,13 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui
+    path: /swagger-ui.html
     operations-sorter: method
+    enabled: true
 server:
   port: 8080
 nocodb:
-  url: http://nocodb:8080
+  url: http://nocodb:8090
   api-key: your-nocodb-api-key
-bbb:
-  url: http://bbb:8080/bigbluebutton/api
-  secret: your-bbb-secret

@@ -1,108 +1,106 @@
 package site.javatech.cim.core.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import site.javatech.cim.core.dto.CreateUserRequest;
+import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.model.User;
+import site.javatech.cim.core.security.JwtUtil;
 import site.javatech.cim.core.service.UserService;
 
-import java.util.List;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Контроллер для управления пользователями и их ролями.
+ * Контроллер для управления пользователями и аутентификацией.
  */
 @RestController
 @RequestMapping("/api/users")
-@Tag(name = "Пользователи", description = "API для управления пользователями и ролями")
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    /**
-     * Получить список всех пользователей.
-     * @return Список пользователей
-     */
-    @Operation(summary = "Получить список всех пользователей", description = "Возвращает список всех пользователей.")
-    @ApiResponse(responseCode = "200", description = "Список пользователей успешно возвращен")
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     /**
-     * Получить пользователя по ID.
-     * @param id ID пользователя
-     * @return Пользователь или 404, если не найден
+     * Регистрация нового пользователя.
+     * @param userData Данные пользователя (user: {username, password}, roleNames)
+     * @return Ответ с информацией о пользователе и JWT-токеном
      */
-    @Operation(summary = "Получить пользователя по ID", description = "Возвращает пользователя по указанному ID.")
-    @ApiResponse(responseCode = "200", description = "Пользователь найден")
-    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(user);
-    }
-
-    /**
-     * Получить пользователя по имени.
-     * @param username Имя пользователя
-     * @return Пользователь или 404, если не найден
-     */
-    @Operation(summary = "Получить пользователя по имени", description = "Возвращает пользователя по имени пользователя.")
-    @ApiResponse(responseCode = "200", description = "Пользователь найден")
-    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    @GetMapping("/by-username")
-    public ResponseEntity<User> getUserByUsername(@RequestParam String username) {
-        User user = userService.getUserByUsername(username);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(user);
-    }
-
-    /**
-     * Создать нового пользователя.
-     * @param request Данные пользователя и роли
-     * @return Созданный пользователь
-     */
-    @Operation(summary = "Создать нового пользователя", description = "Создает нового пользователя с указанными ролями.")
-    @ApiResponse(responseCode = "200", description = "Пользователь успешно создан")
-    @ApiResponse(responseCode = "400", description = "Некорректные данные")
     @PostMapping("/register")
-    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest request) {
-        if (request.getUser() == null || request.getRoleNames() == null || request.getRoleNames().isEmpty()) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<?> createUser(@RequestBody Map<String, Object> userData) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, String> userMap = (Map<String, String>) userData.get("user");
+            String username = userMap.get("username");
+            if (userService.existsByUsername(username)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "Пользователь с именем " + username + " уже существует"));
+            }
+            User user = userService.createUser(userData);
+            String[] roles = user.getRoles().stream().map(Role::getName).toArray(String[]::new);
+            String token = jwtUtil.generateToken(user.getUsername(), roles);
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", user);
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Ошибка регистрации: " + e.getMessage()));
         }
-        User createdUser = userService.createUser(request.getUser(), request.getRoleNames());
-        return ResponseEntity.ok(createdUser);
     }
 
     /**
-     * Назначить роли пользователю.
-     * @param id ID пользователя
-     * @param roleNames Список имен ролей
-     * @return Обновленный пользователь или 404, если не найден
+     * Аутентификация пользователя.
+     * @param authRequest Данные для входа (username, password)
+     * @return Ответ с информацией о пользователе и JWT-токеном
      */
-    @Operation(summary = "Назначить роли пользователю", description = "Назначает указанные роли пользователю по ID.")
-    @ApiResponse(responseCode = "200", description = "Роли успешно назначены")
-    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    @PutMapping("/{id}/roles")
-    public ResponseEntity<User> assignRoles(@PathVariable Long id, @RequestParam Set<String> roleNames) {
-        User user = userService.assignRoles(id, roleNames);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> authRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            authRequest.get("username"),
+                            authRequest.get("password")
+                    )
+            );
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String[] roles = userService.getRolesByUsername(userDetails.getUsername())
+                    .stream().map(Role::getName).toArray(String[]::new);
+            String token = jwtUtil.generateToken(userDetails.getUsername(), roles);
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", userService.getUserByUsername(userDetails.getUsername()));
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Неверное имя пользователя или пароль"));
         }
-        return ResponseEntity.ok(user);
+    }
+
+    /**
+     * Получение пользователя по имени.
+     * @param username Имя пользователя
+     * @return Данные пользователя
+     */
+    @GetMapping("/by-username")
+    public ResponseEntity<?> getUserByUsername(@RequestParam String username) {
+        try {
+            User user = userService.getUserByUsername(username);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Пользователь не найден"));
+        }
     }
 }

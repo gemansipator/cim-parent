@@ -1,18 +1,21 @@
 package site.javatech.cim.core.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Модель пользователя приложения ЦИМ.
- * Хранит информацию о пользователе и его ролях.
+ * Сущность пользователя.
  */
-@Data
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,5 +32,5 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles;
+    private List<Role> roles = new ArrayList<>();
 }
