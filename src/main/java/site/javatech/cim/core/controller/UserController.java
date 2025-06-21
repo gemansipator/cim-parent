@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import site.javatech.cim.core.dto.CreateUserRequest;
 import site.javatech.cim.core.dto.LoginRequest;
 import site.javatech.cim.core.dto.LoginResponse;
+import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.model.User;
 import site.javatech.cim.core.security.JwtUtil;
 import site.javatech.cim.core.service.UserService;
@@ -23,6 +24,7 @@ import java.util.Set;
 
 /**
  * Контроллер для управления пользователями и их ролями.
+ * Предоставляет API для регистрации, аутентификации и управления ролями пользователей.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -43,6 +45,10 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Получить список всех пользователей.
+     * @return Список пользователей
+     */
     @Operation(summary = "Получить список всех пользователей", description = "Возвращает список всех пользователей.")
     @ApiResponse(responseCode = "200", description = "Список пользователей успешно возвращен")
     @GetMapping
@@ -50,6 +56,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    /**
+     * Получить пользователя по идентификатору.
+     * @param id Идентификатор пользователя
+     * @return Пользователь или 404, если не найден
+     */
     @Operation(summary = "Получить пользователя по ID", description = "Возвращает пользователя по указанному ID.")
     @ApiResponse(responseCode = "200", description = "Пользователь найден")
     @ApiResponse(responseCode = "404", description = "Пользователь не найден")
@@ -62,6 +73,11 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    /**
+     * Получить пользователя по имени.
+     * @param username Имя пользователя
+     * @return Пользователь или 404, если не найден
+     */
     @Operation(summary = "Получить пользователя по имени", description = "Возвращает пользователя по имени пользователя.")
     @ApiResponse(responseCode = "200", description = "Пользователь найден")
     @ApiResponse(responseCode = "404", description = "Пользователь не найден")
@@ -74,6 +90,11 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    /**
+     * Создать нового пользователя.
+     * @param request Данные для создания пользователя
+     * @return Созданный пользователь и JWT-токен
+     */
     @Operation(summary = "Создать нового пользователя", description = "Создает нового пользователя с указанными ролями.")
     @ApiResponse(responseCode = "200", description = "Пользователь успешно создан")
     @ApiResponse(responseCode = "400", description = "Некорректные данные")
@@ -90,6 +111,11 @@ public class UserController {
         return ResponseEntity.ok(new LoginResponse(createdUser, token));
     }
 
+    /**
+     * Аутентифицировать пользователя.
+     * @param request Данные для входа
+     * @return Пользователь и JWT-токен
+     */
     @Operation(summary = "Аутентификация пользователя", description = "Аутентифицирует пользователя и возвращает JWT.")
     @ApiResponse(responseCode = "200", description = "Аутентификация успешна")
     @ApiResponse(responseCode = "401", description = "Неверные учетные данные")
@@ -104,6 +130,12 @@ public class UserController {
         return ResponseEntity.ok(new LoginResponse(user, token));
     }
 
+    /**
+     * Назначить роли пользователю.
+     * @param id Идентификатор пользователя
+     * @param roleNames Список имен ролей
+     * @return Обновленный пользователь
+     */
     @Operation(summary = "Назначить роли пользователю", description = "Назначает указанные роли пользователю по ID.")
     @ApiResponse(responseCode = "200", description = "Роли успешно назначены")
     @ApiResponse(responseCode = "404", description = "Пользователь не найден")

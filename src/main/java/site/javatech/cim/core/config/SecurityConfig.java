@@ -1,41 +1,40 @@
 package site.javatech.cim.core.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import site.javatech.cim.core.service.UserServiceImpl;
+import site.javatech.cim.core.security.JwtFilter;
 
 import java.util.Arrays;
 
 /**
- * Конфигурация безопасности приложения.
+ * Конфигурация безопасности приложения ЦИМ.
+ * Настраивает аутентификацию, авторизацию и CORS.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserServiceImpl userService;
-
-    /**
-     * Конструктор для внедрения зависимостей.
-     * @param userService Сервис пользователей
-     */
-    public SecurityConfig(UserServiceImpl userService) {
-        this.userService = userService;
-    }
+    @Autowired
+    private JwtFilter jwtFilter;
 
     /**
      * Настройка цепочки фильтров безопасности.
-     * @param http Объект HttpSecurity
-     * @return Настроенная цепочка фильтров
-     * @throws Exception при ошибке конфигурации
+     * @param http Объект конфигурации HTTP безопасности
+     * @return Цепочка фильтров безопасности
+     * @throws Exception Если возникает ошибка конфигурации
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -44,17 +43,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").authenticated()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .httpBasic(httpBasic -> httpBasic.realmName("CIM"))
-                .userDetailsService(userService);
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * Настройка CORS.
+     * Настройка CORS для разрешения запросов с фронтенда.
      * @return Источник конфигурации CORS
      */
     @Bean
@@ -75,6 +74,17 @@ public class SecurityConfig {
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Настройка менеджера аутентификации.
+     * @param config Конфигурация аутентификации
+     * @return Менеджер аутентификации
+     * @throws Exception Если возникает ошибка конфигурации
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }

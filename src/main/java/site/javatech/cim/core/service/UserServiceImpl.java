@@ -10,23 +10,47 @@ import site.javatech.cim.core.model.User;
 import site.javatech.cim.core.repository.RoleRepository;
 import site.javatech.cim.core.repository.UserRepository;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Реализация сервиса для управления пользователями.
+ * Реализация сервиса для управления пользователями и аутентификации.
+ * Предоставляет функционал для работы с пользователями и их ролями, а также загрузки данных для аутентификации.
  */
 @Service
-public class UserServiceImpl implements UserService, UserDetailsService {
-
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+public class UserServiceImpl implements UserDetailsService {
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    /**
+     * Получить список всех пользователей.
+     * @return Список пользователей
+     */
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Получить пользователя по идентификатору.
+     * @param id Идентификатор пользователя
+     * @return Пользователь или null, если не найден
+     */
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    /**
+     * Получить пользователя по имени.
+     * @param username Имя пользователя
+     * @return Пользователь
+     */
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     /**
@@ -35,74 +59,46 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * @param roleNames Список имен ролей
      * @return Созданный пользователь
      */
-    @Override
     public User createUser(User user, Set<String> roleNames) {
-        Set<Role> roles = new HashSet<>();
-        if (roleNames != null) {
-            for (String roleName : roleNames) {
-                roleRepository.findByName(roleName).ifPresent(roles::add);
-            }
-        }
+        Set<Role> roles = roleNames.stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
+                .collect(Collectors.toSet());
         user.setRoles(roles);
         return userRepository.save(user);
-    }
-
-    /**
-     * Получить список всех пользователей.
-     * @return Список пользователей
-     */
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    /**
-     * Получить пользователя по ID.
-     * @param id ID пользователя
-     * @return Пользователь или null, если не найден
-     */
-    @Override
-    public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    /**
-     * Получить пользователя по имени.
-     * @param username Имя пользователя
-     * @return Пользователь или null, если не найден
-     */
-    @Override
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username).orElse(null);
     }
 
     /**
      * Назначить роли пользователю.
-     * @param userId ID пользователя
+     * @param id Идентификатор пользователя
      * @param roleNames Список имен ролей
-     * @return Обновленный пользователь
+     * @return Обновленный пользователь или null, если не найден
      */
-    @Override
-    public User assignRoles(Long userId, Set<String> roleNames) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        Set<Role> roles = new HashSet<>();
-        for (String roleName : roleNames) {
-            roleRepository.findByName(roleName).ifPresent(roles::add);
+    public User assignRoles(Long id, Set<String> roleNames) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return null;
         }
+        Set<Role> roles = roleNames.stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
+                .collect(Collectors.toSet());
         user.setRoles(roles);
         return userRepository.save(user);
     }
 
     /**
-     * Загрузить пользователя по имени для аутентификации.
+     * Загрузить данные пользователя для аутентификации.
      * @param username Имя пользователя
-     * @return UserDetails объект
-     * @throws UsernameNotFoundException если пользователь не найден
+     * @return Данные пользователя для Spring Security
+     * @throws UsernameNotFoundException Если пользователь не найден
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("Пользователь не найден: " + username);
+        }
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
