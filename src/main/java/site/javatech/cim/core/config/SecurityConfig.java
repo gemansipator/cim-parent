@@ -11,19 +11,33 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import site.javatech.cim.core.service.UserServiceImpl;
 
 import java.util.Arrays;
 
+/**
+ * Конфигурация безопасности приложения.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
+    private final UserServiceImpl userService;
 
-    public SecurityConfig(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    /**
+     * Конструктор для внедрения зависимостей.
+     * @param userService Сервис пользователей
+     */
+    public SecurityConfig(UserServiceImpl userService) {
+        this.userService = userService;
     }
 
+    /**
+     * Настройка цепочки фильтров безопасности.
+     * @param http Объект HttpSecurity
+     * @return Настроенная цепочка фильтров
+     * @throws Exception при ошибке конфигурации
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,11 +49,15 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic -> httpBasic.realmName("CIM"))
-                .userDetailsService(userDetailsService);
+                .userDetailsService(userService);
 
         return http.build();
     }
 
+    /**
+     * Настройка CORS.
+     * @return Источник конфигурации CORS
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -52,8 +70,21 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Настройка кодировщика паролей.
+     * @return Кодировщик паролей
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();
+    }
+
+    /**
+     * Настройка сервиса пользователей.
+     * @return Сервис пользователей
+     */
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return userService;
     }
 }
