@@ -21,3 +21,9 @@ springdoc:
     operations-sorter: method
 server:
   port: 8080
+nocodb:
+  url: http://nocodb:8080
+  api-key: your-nocodb-api-key
+bbb:
+  url: http://bbb:8080/bigbluebutton/api
+  secret: your-bbb-secret

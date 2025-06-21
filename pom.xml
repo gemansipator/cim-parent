@@ -63,6 +63,16 @@
       <version>5.11.3</version>
       <scope>test</scope>
     </dependency>
+    <!-- Для интеграции с NocoDB -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+    <!-- Для BigBlueButton API -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-xml</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
