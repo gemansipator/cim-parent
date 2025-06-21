@@ -6,8 +6,13 @@ import site.javatech.cim.core.model.User;
 import java.util.Optional;
 
 /**
- * Репозиторий для работы с сущностью User в базе данных.
+ * Репозиторий для работы с пользователями.
  */
 public interface UserRepository extends JpaRepository<User, Long> {
+    /**
+     * Найти пользователя по имени.
+     * @param username Имя пользователя
+     * @return Optional с пользователем или пустой, если не найден
+     */
     Optional<User> findByUsername(String username);
 }
