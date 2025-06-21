@@ -5,11 +5,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import site.javatech.cim.cimmodel.model.BimModel;
-import site.javatech.cim.cimmodel.service.BimModelService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import site.javatech.cim.cimmodel.model.BimModel;
+import site.javatech.cim.cimmodel.service.BimModelService;
 
 /**
  * REST-контроллер для управления BIM-моделями в модуле cim-model.
@@ -22,29 +25,18 @@ public class BimModelController {
     @Autowired
     private BimModelService bimModelService;
 
-    @Operation(summary = "Создать новую BIM-модель", description = "Создает новую BIM-модель.")
-    @ApiResponse(responseCode = "200", description = "Модель успешно создана")
-    @PostMapping
-    public ResponseEntity<BimModel> createBimModel(@RequestBody BimModel bimModel) {
-        return ResponseEntity.ok(bimModelService.createBimModel(bimModel));
-    }
-
+    /**
+     * Получить список всех BIM-моделей.
+     * @return Список имен моделей
+     */
     @Operation(summary = "Получить список всех BIM-моделей", description = "Возвращает список всех BIM-моделей.")
     @ApiResponse(responseCode = "200", description = "Список моделей успешно возвращен")
     @GetMapping
-    public ResponseEntity<List<BimModel>> getAllBimModels() {
-        return ResponseEntity.ok(bimModelService.getAllBimModels());
-    }
-
-    @Operation(summary = "Получить BIM-модель по ID", description = "Возвращает BIM-модель по указанному ID.")
-    @ApiResponse(responseCode = "200", description = "Модель найдена")
-    @ApiResponse(responseCode = "404", description = "Модель не найдена")
-    @GetMapping("/{id}")
-    public ResponseEntity<BimModel> getBimModelById(@PathVariable Long id) {
-        BimModel bimModel = bimModelService.getBimModelById(id);
-        if (bimModel == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(bimModel);
+    public ResponseEntity<List<String>> getAllBimModels() {
+        List<BimModel> bimModels = bimModelService.getAllBimModels();
+        List<String> modelNames = bimModels.stream()
+                .map(model -> "BIM_Model_" + model.getId()) // Пример имени модели
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(modelNames);
     }
 }

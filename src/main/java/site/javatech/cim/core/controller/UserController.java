@@ -3,9 +3,9 @@ package site.javatech.cim.core.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import site.javatech.cim.core.dto.CreateUserRequest;
 import site.javatech.cim.core.model.User;
 import site.javatech.cim.core.service.UserService;
 
@@ -20,8 +20,11 @@ import java.util.Set;
 @Tag(name = "Пользователи", description = "API для управления пользователями и ролями")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     /**
      * Получить список всех пользователей.
@@ -70,15 +73,19 @@ public class UserController {
 
     /**
      * Создать нового пользователя.
-     * @param user Данные пользователя
-     * @param roleNames Список имен ролей
+     * @param request Данные пользователя и роли
      * @return Созданный пользователь
      */
     @Operation(summary = "Создать нового пользователя", description = "Создает нового пользователя с указанными ролями.")
     @ApiResponse(responseCode = "200", description = "Пользователь успешно создан")
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user, @RequestParam Set<String> roleNames) {
-        return ResponseEntity.ok(userService.createUser(user, roleNames));
+    @ApiResponse(responseCode = "400", description = "Некорректные данные")
+    @PostMapping("/register")
+    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest request) {
+        if (request.getUser() == null || request.getRoleNames() == null || request.getRoleNames().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        User createdUser = userService.createUser(request.getUser(), request.getRoleNames());
+        return ResponseEntity.ok(createdUser);
     }
 
     /**
