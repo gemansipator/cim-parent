@@ -6,35 +6,42 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Интерфейс сервиса для управления пользователями приложения ЦИМ.
+ * Сервис для управления пользователями.
  */
 public interface UserService {
     /**
-     * Создает нового пользователя с указанными ролями.
-     * @param user данные пользователя
-     * @param roleNames список имен ролей
-     * @return созданный пользователь
+     * Создать нового пользователя.
+     * @param user Данные пользователя
+     * @param roleNames Список имен ролей
+     * @return Созданный пользователь
      */
     User createUser(User user, Set<String> roleNames);
 
     /**
-     * Получает список всех пользователей.
-     * @return список пользователей
+     * Получить список всех пользователей.
+     * @return Список пользователей
      */
     List<User> getAllUsers();
 
     /**
-     * Получает пользователя по ID.
-     * @param id идентификатор пользователя
-     * @return пользователь или null, если не найден
+     * Получить пользователя по ID.
+     * @param id ID пользователя
+     * @return Пользователь или null, если не найден
      */
     User getUserById(Long id);
 
     /**
-     * Назначает роли пользователю (доступно только администратору).
-     * @param userId идентификатор пользователя
-     * @param roleNames список имен ролей
-     * @return обновленный пользователь
+     * Получить пользователя по имени.
+     * @param username Имя пользователя
+     * @return Пользователь или null, если не найден
+     */
+    User getUserByUsername(String username);
+
+    /**
+     * Назначить роли пользователю.
+     * @param userId ID пользователя
+     * @param roleNames Список имен ролей
+     * @return Обновленный пользователь
      */
     User assignRoles(Long userId, Set<String> roleNames);
 }

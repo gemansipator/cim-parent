@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Реализация сервиса для управления пользователями приложения ЦИМ.
+ * Реализация сервиса для управления пользователями.
  */
 @Service
 public class UserServiceImpl implements UserService {
@@ -22,6 +22,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleService roleService;
 
+    /**
+     * Создать нового пользователя.
+     * @param user Данные пользователя
+     * @param roleNames Список имен ролей
+     * @return Созданный пользователь
+     */
     @Override
     public User createUser(User user, Set<String> roleNames) {
         Set<Role> roles = new HashSet<>();
@@ -36,16 +42,41 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Получить список всех пользователей.
+     * @return Список пользователей
+     */
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
+    /**
+     * Получить пользователя по ID.
+     * @param id ID пользователя
+     * @return Пользователь или null, если не найден
+     */
     @Override
     public User getUserById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
 
+    /**
+     * Получить пользователя по имени.
+     * @param username Имя пользователя
+     * @return Пользователь или null, если не найден
+     */
+    @Override
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
+
+    /**
+     * Назначить роли пользователю.
+     * @param userId ID пользователя
+     * @param roleNames Список имен ролей
+     * @return Обновленный пользователь
+     */
     @Override
     public User assignRoles(Long userId, Set<String> roleNames) {
         User user = userRepository.findById(userId)
