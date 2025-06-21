@@ -7,6 +7,7 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - nocodb
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/cim_db
       - SPRING_DATASOURCE_USERNAME=postgres
@@ -21,5 +22,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  nocodb:
+    image: nocodb/nocodb:latest
+    ports:
+      - "8090:8080"
+    environment:
+      - NC_DB=pg://db:5432?u=postgres&p=postgres&d=cim_nocodb
+    depends_on:
+      - db
+    volumes:
+      - nocodb_data:/usr/app/data
 volumes:
   postgres_data:
+  nocodb_data:
