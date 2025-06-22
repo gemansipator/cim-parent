@@ -8,8 +8,9 @@ import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.repository.RoleRepository;
 
 /**
- * Инициализатор данных для создания начальных ролей в базе данных.
- * Очищает таблицы roles, user_roles, users и сбрасывает автоинкремент перед созданием ролей.
+ * Инициализатор данных для создания начальных ролей и очистки таблиц.
+ * Очищает таблицы roles, user_roles и users (при необходимости), сбрасывает автоинкремент
+ * и создаёт роли ADMIN, SUPERUSER, USER.
  */
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -21,18 +22,27 @@ public class DataInitializer implements CommandLineRunner {
     private JdbcTemplate jdbcTemplate;
 
     /**
-     * Очищает таблицы roles, user_roles, users, сбрасывает автоинкремент и создаёт роли ADMIN, SUPERUSER, USER.
+     * Очищает таблицы, сбрасывает автоинкремент и создаёт роли ADMIN, SUPERUSER, USER.
+     * Сбрасывает users_id_seq, если таблица users пуста или содержит пустые username.
      * @param args Аргументы командной строки
      * @throws Exception Если произошла ошибка
      */
     @Override
     public void run(String... args) throws Exception {
+        // Проверка состояния таблицы users
+        Long userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Long.class);
+        Long invalidUsers = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM users WHERE username IS NULL OR username = ''", Long.class);
+
         // Очистка таблиц и сброс автоинкремента
         jdbcTemplate.update("DELETE FROM user_roles");
-        jdbcTemplate.update("DELETE FROM users");
         jdbcTemplate.update("DELETE FROM roles");
         jdbcTemplate.update("ALTER SEQUENCE roles_id_seq RESTART WITH 1");
-        jdbcTemplate.update("ALTER SEQUENCE users_id_seq RESTART WITH 1");
+
+        if (userCount == 0 || invalidUsers > 0) {
+            jdbcTemplate.update("DELETE FROM users");
+            jdbcTemplate.update("ALTER SEQUENCE users_id_seq RESTART WITH 1");
+        }
 
         // Создание ролей
         if (roleRepository.findByName("ADMIN").isEmpty()) {
