@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * Предоставляет функционал для работы с пользователями и их ролями, а также загрузки данных для аутентификации.
  */
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
@@ -57,6 +57,7 @@ public class UserServiceImpl implements UserService {
      * Получить пользователя по имени.
      * @param username Имя пользователя
      * @return Пользователь
+     * @throws UsernameNotFoundException Если пользователь не найден
      */
     @Override
     public User getUserByUsername(String username) {
@@ -66,8 +67,10 @@ public class UserServiceImpl implements UserService {
 
     /**
      * Создать нового пользователя.
-     * @param userData Данные пользователя (user: {username, password}, roleNames)
+     * Первый зарегистрировавшийся пользователь получает роль ADMIN, остальные — роли из roleNames.
+     * @param userData Данные пользователя (user: {username, password}, roleNames: список ролей)
      * @return Созданный пользователь
+     * @throws IllegalArgumentException Если данные некорректны
      */
     @Override
     @Transactional
@@ -83,14 +86,21 @@ public class UserServiceImpl implements UserService {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
 
-        List<Role> roles = roleNames.stream()
-                .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseGet(() -> {
-                            Role newRole = new Role();
-                            newRole.setName(roleName);
-                            return roleRepository.save(newRole);
-                        }))
-                .collect(Collectors.toList());
+        List<Role> roles = new ArrayList<>();
+        if (userRepository.count() == 0) {
+            Role adminRole = roleRepository.findByName("ADMIN")
+                    .orElseThrow(() -> new RuntimeException("Роль ADMIN не найдена"));
+            roles.add(adminRole);
+        } else {
+            roles = roleNames.stream()
+                    .map(roleName -> roleRepository.findByName(roleName)
+                            .orElseGet(() -> {
+                                Role newRole = new Role();
+                                newRole.setName(roleName);
+                                return roleRepository.save(newRole);
+                            }))
+                    .collect(Collectors.toList());
+        }
         user.setRoles(roles);
         return userRepository.save(user);
     }
@@ -100,6 +110,7 @@ public class UserServiceImpl implements UserService {
      * @param user Данные пользователя
      * @param roleNames Список имен ролей
      * @return Созданный пользователь
+     * @throws RuntimeException Если пользователь уже существует или роль не найдена
      */
     @Override
     @Transactional
@@ -117,6 +128,7 @@ public class UserServiceImpl implements UserService {
      * @param id Идентификатор пользователя
      * @param roleNames Список имен ролей
      * @return Обновленный пользователь или null, если не найден
+     * @throws RuntimeException Если роль не найдена
      */
     @Override
     @Transactional
@@ -147,6 +159,7 @@ public class UserServiceImpl implements UserService {
      * Получение ролей пользователя по имени.
      * @param username Имя пользователя
      * @return Список ролей
+     * @throws UsernameNotFoundException Если пользователь не найден
      */
     @Override
     public List<Role> getRolesByUsername(String username) {
