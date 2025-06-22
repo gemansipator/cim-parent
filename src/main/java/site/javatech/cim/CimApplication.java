@@ -9,7 +9,6 @@ import org.springframework.context.annotation.ComponentScan;
  * Запускает Spring Boot приложение.
  */
 @SpringBootApplication
-@ComponentScan(basePackages = "site.javatech.cim.core")
 public class CimApplication {
     /**
      * Точка входа приложения.
