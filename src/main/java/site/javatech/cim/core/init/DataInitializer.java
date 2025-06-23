@@ -10,6 +10,10 @@ import site.javatech.cim.core.repository.RoleRepository;
 
 import java.util.List;
 
+/**
+ * Инициализатор данных приложения ЦИМ.
+ * Выполняет начальную настройку ролей и модулей.
+ */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -22,6 +26,11 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    /**
+     * Инициализация данных при старте приложения.
+     * @param args Аргументы командной строки
+     * @throws Exception Возможные исключения при инициализации
+     */
     @Override
     public void run(String... args) throws Exception {
         // Проверка состояния таблицы users
@@ -29,36 +38,41 @@ public class DataInitializer implements CommandLineRunner {
         Long invalidUsers = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM users WHERE username IS NULL OR username = ''", Long.class);
 
-        // Очистка таблиц и сброс автоинкремента (если нужно)
+        // Очистка таблиц и сброс автоинкремента
         if (userCount == 0 || invalidUsers > 0) {
             jdbcTemplate.update("DELETE FROM user_roles");
             jdbcTemplate.update("DELETE FROM users");
             jdbcTemplate.update("ALTER SEQUENCE users_id_seq RESTART WITH 1");
         }
 
-        // Инициализация ролей с фиксированными ID
+        // Инициализация ролей
         initRoles();
 
         // Инициализация модулей
         initModules();
     }
 
+    /**
+     * Инициализация ролей в базе данных.
+     */
     private void initRoles() {
-        // Удаляем только если нет пользователей (чтобы не сломать связи)
         Long userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Long.class);
         if (userCount == 0) {
             jdbcTemplate.update("DELETE FROM roles");
             jdbcTemplate.update("ALTER SEQUENCE roles_id_seq RESTART WITH 1");
         }
 
-        // Создаем/обновляем роли с фиксированными ID
         saveRoleWithFixedId(1L, "ADMIN");
         saveRoleWithFixedId(2L, "SUPERUSER");
         saveRoleWithFixedId(3L, "USER");
     }
 
+    /**
+     * Сохранение роли с фиксированным ID.
+     * @param id Идентификатор роли
+     * @param name Название роли
+     */
     private void saveRoleWithFixedId(Long id, String name) {
-        // Используем native query для гарантированной вставки с нужным ID
         jdbcTemplate.update(
                 "INSERT INTO roles (id, name) VALUES (?, ?) " +
                         "ON CONFLICT (id) DO UPDATE SET name = ?",
@@ -66,8 +80,10 @@ public class DataInitializer implements CommandLineRunner {
         );
     }
 
+    /**
+     * Инициализация модулей в базе данных.
+     */
     private void initModules() {
-        // Очищаем модули только если их нет
         if (moduleRepository.count() == 0) {
             jdbcTemplate.update("DELETE FROM modules");
             jdbcTemplate.update("ALTER SEQUENCE modules_id_seq RESTART WITH 1");
