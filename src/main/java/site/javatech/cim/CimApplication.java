@@ -11,7 +11,11 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan(basePackages = {
         "site.javatech.cim.core",
-        "site.javatech.cim.repository" // Теперь сканирует и репозитории
+        "site.javatech.cim.repository",
+        "site.javatech.cim.bbb",
+        "site.javatech.cim.cimmodel",
+        "site.javatech.cim.requirements",
+        "site.javatech.cim.status"
 })
 public class CimApplication {
     /**
