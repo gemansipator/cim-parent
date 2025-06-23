@@ -15,7 +15,7 @@ import site.javatech.cim.cimmodel.model.BimModel;
 import site.javatech.cim.cimmodel.service.BimModelService;
 
 /**
- * REST-контроллер для управления BIM-моделями в модуле cim-model.
+ * REST-контроллер для управления BIM-моделями в модуле cim-model
  */
 @RestController
 @RequestMapping("/api/bim-models")
