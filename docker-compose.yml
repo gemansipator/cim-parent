@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   db:
     image: postgres:17
@@ -14,7 +16,7 @@ services:
 
   app:
     build:
-      context: .
+      context: C:/Users/Nikolay/IdeaProjects/cim-parent
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
@@ -32,7 +34,7 @@ services:
       context: C:/Users/Nikolay/WebstormProjects/cim-parent-frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       - app
     volumes:
@@ -48,6 +50,15 @@ services:
       - NC_DB=pg://db:5432?u=postgres&p=postgres&d=cim_db
     depends_on:
       - db
+    networks:
+      - cim-network
+
+  ifc-viewer:
+    build:
+      context: C:/Users/Nikolay/WebstormProjects/web-ifc-viewer
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
     networks:
       - cim-network
 
