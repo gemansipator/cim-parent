@@ -16,7 +16,7 @@ services:
 
   app:
     build:
-      context: C:/Users/Nikolay/IdeaProjects/cim-parent
+      context: C:/Users/geman/IdeaProjects/cim-parent
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
@@ -31,14 +31,14 @@ services:
 
   frontend:
     build:
-      context: C:/Users/Nikolay/WebstormProjects/cim-parent-frontend
+      context: C:/Users/geman/WebstormProjects/cim-parent-frontend
       dockerfile: Dockerfile
     ports:
       - "80:80"
     depends_on:
       - app
     volumes:
-      - C:/Users/Nikolay/WebstormProjects/cim-parent-frontend/nginx.conf:/etc/nginx/conf.d/default.conf
+      - C:/Users/geman/WebstormProjects/cim-parent-frontend/nginx.conf:/etc/nginx/conf.d/default.conf
     networks:
       - cim-network
 
@@ -55,7 +55,7 @@ services:
 
   ifc-viewer:
     build:
-      context: C:/Users/Nikolay/WebstormProjects/web-ifc-viewer
+      context: C:/Users/geman/WebstormProjects/cim-ifc-viewer
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
