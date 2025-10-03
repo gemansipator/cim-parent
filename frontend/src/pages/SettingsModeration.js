@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { getAllUsers, approveUser, blockUser, unblockUser, deleteUser, createUser, getSettings, updateSettings } from '../services/api';
+import { getAllUsers, approveUser, blockUser, unblockUser, deleteUser, updateRole, createUser, getSettings, updateSettings } from '../services/api';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-import { useAuthStore } from '../context/authStore'; // Добавлен import для useAuthStore
+import { useAuthStore } from '../context/authStore';
 import '../styles/Dashboard.css';
 
 /**
  * Компонент модуля "Настройки и модерация".
  * Отображает таблицу пользователей с кнопками модерации и переключатели глобальных настроек.
  * Добавлена свернутость секций (accordion), защита от самоудаления/блокировки, single select для роли, кнопка разблокировки.
+ * Добавлена смена роли в таблице.
  */
 const SettingsModeration = () => {
     const [users, setUsers] = useState([]);
@@ -17,6 +18,8 @@ const SettingsModeration = () => {
     const [availableRoles] = useState(['SUPERUSER', 'USER']); // Скрыта 'ADMIN'
     const [error, setError] = useState('');
     const [expandedSections, setExpandedSections] = useState({ settings: true, users: true, create: true }); // Для accordion
+    const [roleChangeId, setRoleChangeId] = useState(null); // Для открытия select смены роли
+    const [newRole, setNewRole] = useState(''); // Для новой роли
 
     const { user } = useAuthStore(); // Для текущего пользователя
 
@@ -92,6 +95,26 @@ const SettingsModeration = () => {
             } catch (err) {
                 toast.error(err.message);
             }
+        }
+    };
+
+    const handleRoleChange = async (id) => {
+        if (!newRole) {
+            toast.error('Выберите роль');
+            return;
+        }
+        if (id === user.id) {
+            toast.error('Нельзя изменить свою роль');
+            return;
+        }
+        try {
+            const updatedUser = await updateRole(id, newRole);
+            setUsers(users.map(u => u.id === id ? updatedUser : u));
+            setRoleChangeId(null);
+            setNewRole('');
+            toast.success('Роль изменена');
+        } catch (err) {
+            toast.error(err.message);
         }
     };
 
@@ -193,9 +216,24 @@ const SettingsModeration = () => {
                                             )}
                                             {u.id !== user.id && (
                                                 <>
-                                                    <button onClick={() => handleBlockUser(u.id)} className="block-btn">Заблокировать</button>
+                                                    {u.status !== 'BLOCKED' && (
+                                                        <button onClick={() => handleBlockUser(u.id)} className="block-btn">Заблокировать</button>
+                                                    )}
                                                     <button onClick={() => handleDeleteUser(u.id)} className="delete-btn">Удалить</button>
                                                 </>
+                                            )}
+                                            {u.id !== user.id && (
+                                                <button onClick={() => setRoleChangeId(u.id)} className="change-role-btn">Изменить роль</button>
+                                            )}
+                                            {roleChangeId === u.id && u.id !== user.id && (
+                                                <div className="role-change">
+                                                    <select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                                                        <option value="">Выберите роль</option>
+                                                        {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                                                    </select>
+                                                    <button onClick={() => handleRoleChange(u.id)} className="save-role-btn">Сохранить</button>
+                                                    <button onClick={() => setRoleChangeId(null)} className="cancel-role-btn">Отмена</button>
+                                                </div>
                                             )}
                                         </td>
                                     </tr>
@@ -243,4 +281,4 @@ const SettingsModeration = () => {
     );
 };
 
-export default SettingsModeration;
+export default SettingsModer

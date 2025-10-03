@@ -176,12 +176,21 @@ export const deleteUser = async (id) => {
     }
 };
 
-export const createUser = async (userData) => {
+export const updateRole = async (id, roleName) => { // Добавлено для смены роли
     try {
-        const response = await api.post('/users/create', userData); // Путь /create
+        const response = await api.put(`/users/${id}/role?roleName=${roleName}`);
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error || 'Ошибка создания пользователя'); // Исправлено: проверка error.response.data.error
+        throw new Error(error.response?.data?.error || 'Ошибка смены роли');
+    }
+};
+
+export const createUser = async (userData) => {
+    try {
+        const response = await api.post('/users/create', userData);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка создания пользователя');
     }
 };
 
