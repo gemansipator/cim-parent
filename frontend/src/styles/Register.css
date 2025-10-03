@@ -1,0 +1,180 @@
+/* ============================== */
+/*         ОСНОВНЫЕ ПЕРЕМЕННЫЕ   */
+/* ============================== */
+:root {
+    --primary-color: #2563eb; /* Основной синий цвет */
+    --primary-dark: #1d4ed8;  /* Тёмный оттенок основного цвета */
+    --secondary-color: #f8fafc; /* Второстепенный светлый цвет */
+    --background-color: #f5f7fa; /* Цвет фона */
+    --card-color: #ffffff; /* Цвет карточек */
+    --text-color: #1e293b; /* Основной цвет текста */
+    --text-secondary: #64748b; /* Второстепенный цвет текста */
+    --error-color: #dc2626; /* Цвет ошибок */
+    --success-color: #16a34a; /* Цвет успеха */
+    --header-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* Градиент фона */
+}
+
+/* ============================== */
+/*         ТЁМНАЯ ТЕМА           */
+/* ============================== */
+body.dark-mode {
+    --secondary-color: #1f2937;
+    --background-color: #111827;
+    --card-color: #1e293b;
+    --text-color: #f1f5f9;
+    --text-secondary: #9ca3af;
+    --header-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+}
+
+/* Контейнер страницы регистрации */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--header-gradient);
+}
+
+/* Карточка регистрации */
+.register-card {
+    background: var(--card-color);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+/* Заголовок */
+.register-title {
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    color: var(--text-color);
+}
+
+/* Поля формы */
+.register-field {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+/* Метки полей */
+.register-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+/* Поля ввода */
+.register-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--text-secondary);
+    border-radius: 4px;
+    font-size: 1rem;
+    background: var(--card-color);
+    color: var(--text-color);
+}
+
+/* Кнопка регистрации */
+.register-button {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.register-button:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Кнопка перехода на логин */
+.login-link-button {
+    width: 100%;
+    padding: 0.8rem;
+    margin-top: 1rem;
+    background-color: #6c757d;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-link-button:hover {
+    background-color: #5a6268;
+}
+
+/* Кнопка перехода к входу после регистрации */
+.login-redirect-button {
+    width: 100%;
+    padding: 0.8rem;
+    margin-top: 1rem;
+    background-color: var(--success-color);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-redirect-button:hover {
+    background-color: #218838;
+}
+
+/* Сообщение об ошибке */
+.register-error {
+    color: var(--error-color);
+    margin-bottom: 1rem;
+}
+
+/* Сообщение об успехе */
+.register-success {
+    color: var(--success-color);
+    margin-bottom: 1rem;
+}
+
+/* Кнопка переключения темы */
+.theme-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+}
+
+.theme-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--text-color);
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    .register-card {
+        padding: 1.5rem;
+        max-width: 90%;
+    }
+    .register-title {
+        font-size: 1.5rem;
+    }
+    .register-input {
+        padding: 0.6rem;
+    }
+    .register-button, .login-link-button, .login-redirect-button {
+        padding: 0.6rem;
+    }
+}
