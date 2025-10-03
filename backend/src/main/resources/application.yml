@@ -10,9 +10,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    open-in-view: false  # Добавлено для устранения предупреждения
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -20,8 +22,9 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     enabled: true
+
 server:
   port: 8080
+
 nocodb:
   url: http://nocodb:8090
-  api-key: your-nocodb-api-key

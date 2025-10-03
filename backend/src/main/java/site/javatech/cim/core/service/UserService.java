@@ -10,6 +10,7 @@ import java.util.Set;
 
 /**
  * Интерфейс сервиса для управления пользователями.
+ * Добавлены методы для модерации и проверки настроек.
  */
 public interface UserService extends UserDetailsService {
 
@@ -28,4 +29,16 @@ public interface UserService extends UserDetailsService {
     boolean existsByUsername(String username);
 
     List<Role> getRolesByUsername(String username);
+
+    // Добавлено для модерации
+    User approveUser(Long id);
+
+    User blockUser(Long id);
+
+    void deleteUser(Long id);
+
+    // Добавлено для проверки глобальных настроек
+    boolean isRegistrationEnabled();
+
+    boolean isAutoApprovalEnabled();
 }

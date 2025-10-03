@@ -20,7 +20,9 @@ import java.util.stream.Collectors;
 
 /**
  * Реализация сервиса для управления пользователями и аутентификации.
- * Предоставляет функционал для работы с пользователями и их ролями, а также загрузки данных для аутентификации.
+ * Добавлена логика модерации: статус PENDING для новых, кроме первого (админ).
+ * Методы approveUser, blockUser, deleteUser для админа.
+ * Интеграция с AppSettings для глобальных флагов.
  */
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
@@ -33,6 +35,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AppSettingsService appSettingsService; // Добавлено для глобальных настроек
 
     /**
      * Получить список всех пользователей.
@@ -67,14 +72,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     /**
      * Создать нового пользователя.
-     * Первый зарегистрировавшийся пользователь получает роль ADMIN, остальные — роли из roleNames.
+     * Первый зарегистрировавшийся пользователь получает роль ADMIN и статус APPROVED.
+     * Остальные — статус PENDING и роли из roleNames (если autoApprovalEnabled = true, то APPROVED).
+     * Проверка глобальных настроек: если registrationEnabled = false, отклонить.
      * @param userData Данные пользователя (user: {username, password}, roleNames: список ролей)
      * @return Созданный пользователь
-     * @throws IllegalArgumentException Если данные некорректны
+     * @throws IllegalArgumentException Если данные некорректны или регистрация закрыта
      */
     @Override
     @Transactional
     public User createUser(Map<String, Object> userData) {
+        // Проверка глобальных настроек
+        if (!appSettingsService.isRegistrationEnabled()) {
+            throw new IllegalArgumentException("Регистрация временно закрыта администратором");
+        }
+
         @SuppressWarnings("unchecked")
         Map<String, String> userMap = (Map<String, String>) userData.get("user");
         String username = userMap.get("username");
@@ -82,16 +94,28 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         @SuppressWarnings("unchecked")
         List<String> roleNames = (List<String>) userData.get("roleNames");
 
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Пользователь с именем " + username + " уже существует");
+        }
+
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
 
         List<Role> roles = new ArrayList<>();
         if (userRepository.count() == 0) {
+            // Первый пользователь — админ
             Role adminRole = roleRepository.findByName("ADMIN")
-                    .orElseThrow(() -> new RuntimeException("Роль ADMIN не найдена"));
+                    .orElseGet(() -> {
+                        Role newRole = new Role();
+                        newRole.setName("ADMIN");
+                        return roleRepository.save(newRole);
+                    });
             roles.add(adminRole);
+            user.setStatus(User.Status.APPROVED); // Автоматическое одобрение
         } else {
+            // Остальные — PENDING или APPROVED, в зависимости от autoApprovalEnabled
+            user.setStatus(appSettingsService.isAutoApprovalEnabled() ? User.Status.APPROVED : User.Status.PENDING);
             roles = roleNames.stream()
                     .map(roleName -> roleRepository.findByName(roleName)
                             .orElseGet(() -> {
@@ -106,7 +130,44 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Создать нового пользователя.
+     * Одобрить пользователя (изменить статус на APPROVED).
+     * @param id Идентификатор пользователя
+     * @return Обновленный пользователь
+     * @throws IllegalArgumentException Если пользователь не найден
+     */
+    @Transactional
+    public User approveUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        user.setStatus(User.Status.APPROVED);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Заблокировать пользователя (изменить статус на BLOCKED).
+     * @param id Идентификатор пользователя
+     * @return Обновленный пользователь
+     * @throws IllegalArgumentException Если пользователь не найден
+     */
+    @Transactional
+    public User blockUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        user.setStatus(User.Status.BLOCKED);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Удалить пользователя.
+     * @param id Идентификатор пользователя
+     * @throws IllegalArgumentException Если пользователь не найден
+     */
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        userRepository.delete(user);
+    }
+
+    /**
+     * Создать нового пользователя (ручное добавление админом).
      * @param user Данные пользователя
      * @param roleNames Список имен ролей
      * @return Созданный пользователь
@@ -115,6 +176,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     @Transactional
     public User createUser(User user, Set<String> roleNames) {
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new RuntimeException("Пользователь с именем " + user.getUsername() + " уже существует");
+        }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setStatus(User.Status.APPROVED); // Ручное добавление — сразу одобрено
         List<Role> roles = roleNames.stream()
                 .map(roleName -> roleRepository.findByName(roleName)
                         .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
@@ -152,7 +218,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      */
     @Override
     public boolean existsByUsername(String username) {
-        return userRepository.findByUsername(username).isPresent();
+        return userRepository.existsByUsername(username);
     }
 
     /**
@@ -172,12 +238,19 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * Загрузка данных пользователя для аутентификации.
      * @param username Имя пользователя
      * @return Данные пользователя для Spring Security
-     * @throws UsernameNotFoundException Если пользователь не найден
+     * @throws UsernameNotFoundException Если пользователь не найден или заблокирован
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + username));
+        // Проверка статуса при логине
+        if (user.getStatus() == User.Status.PENDING) {
+            throw new UsernameNotFoundException("Ваш аккаунт ожидает одобрения администратором");
+        }
+        if (user.getStatus() == User.Status.BLOCKED) {
+            throw new UsernameNotFoundException("Ваш аккаунт заблокирован администратором");
+        }
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
@@ -186,5 +259,23 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                         .map(name -> name.startsWith("ROLE_") ? name.substring(5) : name)
                         .toArray(String[]::new))
                 .build();
+    }
+
+    /**
+     * Проверка разрешения регистрации (из глобальных настроек).
+     * @return true, если регистрация разрешена
+     */
+    @Override
+    public boolean isRegistrationEnabled() {
+        return appSettingsService.isRegistrationEnabled();
+    }
+
+    /**
+     * Проверка автоодобрения (из глобальных настроек).
+     * @return true, если автоодобрение включено
+     */
+    @Override
+    public boolean isAutoApprovalEnabled() {
+        return appSettingsService.isAutoApprovalEnabled();
     }
 }

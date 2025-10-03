@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../services/api';
 import { useAuthStore } from '../context/authStore';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify'; // Добавлено для уведомлений
 import '../styles/Login.css';
 
 /**
  * Компонент страницы входа.
+ * Добавлена проверка статуса пользователя при логине (уведомление, если PENDING или BLOCKED).
  */
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -37,6 +39,7 @@ const Login = () => {
             navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Ошибка входа');
+            toast.error(err.message); // Добавлено уведомление
         }
     };
 
