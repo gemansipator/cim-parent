@@ -8,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.model.User;
@@ -188,7 +187,7 @@ public class UserController {
      * @param userData Данные пользователя (user: {username, password}, roleNames: список ролей)
      * @return Созданный пользователь
      */
-    @PostMapping("/manual-create")
+    @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> manualCreateUser(@RequestBody Map<String, Object> userData) {
         try {

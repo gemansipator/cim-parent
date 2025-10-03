@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { getAllUsers, approveUser, blockUser, deleteUser, createUser, getSettings, updateSettings } from '../services/api';
-import { ShieldCheckIcon, UserPlusIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { getAllUsers, approveUser, blockUser, unblockUser, deleteUser, createUser, getSettings, updateSettings } from '../services/api';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
+import { useAuthStore } from '../context/authStore'; // Добавлен import для useAuthStore
 import '../styles/Dashboard.css';
 
 /**
  * Компонент модуля "Настройки и модерация".
  * Отображает таблицу пользователей с кнопками модерации и переключатели глобальных настроек.
+ * Добавлена свернутость секций (accordion), защита от самоудаления/блокировки, single select для роли, кнопка разблокировки.
  */
 const SettingsModeration = () => {
     const [users, setUsers] = useState([]);
     const [settings, setSettings] = useState(null);
-    const [newUser, setNewUser] = useState({ username: '', password: '', roleNames: [] });
-    const [availableRoles] = useState(['ADMIN', 'SUPERUSER', 'USER']);
+    const [newUser, setNewUser] = useState({ username: '', password: '', roleName: '' }); // Single role
+    const [availableRoles] = useState(['SUPERUSER', 'USER']); // Скрыта 'ADMIN'
     const [error, setError] = useState('');
+    const [expandedSections, setExpandedSections] = useState({ settings: true, users: true, create: true }); // Для accordion
+
+    const { user } = useAuthStore(); // Для текущего пользователя
 
     useEffect(() => {
         loadData();
@@ -32,6 +37,10 @@ const SettingsModeration = () => {
         }
     };
 
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
     const handleApproveUser = async (id) => {
         try {
             const updatedUser = await approveUser(id);
@@ -43,6 +52,10 @@ const SettingsModeration = () => {
     };
 
     const handleBlockUser = async (id) => {
+        if (id === user.id) {
+            toast.error('Нельзя заблокировать самого себя');
+            return;
+        }
         try {
             const updatedUser = await blockUser(id);
             setUsers(users.map(u => u.id === id ? updatedUser : u));
@@ -52,7 +65,25 @@ const SettingsModeration = () => {
         }
     };
 
+    const handleUnblockUser = async (id) => {
+        if (id === user.id) {
+            toast.error('Нельзя разблокировать самого себя');
+            return;
+        }
+        try {
+            const updatedUser = await unblockUser(id);
+            setUsers(users.map(u => u.id === id ? updatedUser : u));
+            toast.success('Пользователь разблокирован');
+        } catch (err) {
+            toast.error(err.message);
+        }
+    };
+
     const handleDeleteUser = async (id) => {
+        if (id === user.id) {
+            toast.error('Нельзя удалить самого себя');
+            return;
+        }
         if (window.confirm('Удалить пользователя?')) {
             try {
                 await deleteUser(id);
@@ -65,8 +96,8 @@ const SettingsModeration = () => {
     };
 
     const handleCreateUser = async () => {
-        if (!newUser.username || !newUser.password) {
-            toast.error('Заполните имя пользователя и пароль');
+        if (!newUser.username || !newUser.password || !newUser.roleName) {
+            toast.error('Заполните все поля');
             return;
         }
         try {
@@ -75,11 +106,11 @@ const SettingsModeration = () => {
                     username: newUser.username,
                     password: newUser.password,
                 },
-                roleNames: newUser.roleNames
+                roleNames: [newUser.roleName]
             };
             const createdUser = await createUser(newUserData);
             setUsers([...users, createdUser]);
-            setNewUser({ username: '', password: '', roleNames: [] });
+            setNewUser({ username: '', password: '', roleName: '' });
             toast.success('Пользователь создан');
         } catch (err) {
             toast.error(err.message);
@@ -100,74 +131,113 @@ const SettingsModeration = () => {
         <div className="module-content-card">
             <h2 className="module-content-title">Настройки и модерация</h2>
             <div className="module-content-details">
-                <h3>Глобальные настройки</h3>
-                <div className="settings-row">
-                    <label>Разрешить регистрацию</label>
-                    <input
-                        type="checkbox"
-                        checked={settings?.registrationEnabled || false}
-                        onChange={(e) => handleUpdateSettings({ ...settings, registrationEnabled: e.target.checked })}
-                    />
+                {/* Секция глобальных настроек */}
+                <div className="accordion-section">
+                    <button className="accordion-header" onClick={() => toggleSection('settings')}>
+                        <h3>Глобальные настройки</h3>
+                        {expandedSections.settings ? <ChevronUpIcon className="accordion-icon" /> : <ChevronDownIcon className="accordion-icon" />}
+                    </button>
+                    {expandedSections.settings && (
+                        <div className="accordion-content">
+                            <div className="settings-row">
+                                <label>Разрешить регистрацию</label>
+                                <input
+                                    type="checkbox"
+                                    checked={settings?.registrationEnabled || false}
+                                    onChange={(e) => handleUpdateSettings({ ...settings, registrationEnabled: e.target.checked })}
+                                />
+                            </div>
+                            <div className="settings-row">
+                                <label>Автоодобрение новых пользователей</label>
+                                <input
+                                    type="checkbox"
+                                    checked={settings?.autoApprovalEnabled || false}
+                                    onChange={(e) => handleUpdateSettings({ ...settings, autoApprovalEnabled: e.target.checked })}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="settings-row">
-                    <label>Автоодобрение новых пользователей</label>
-                    <input
-                        type="checkbox"
-                        checked={settings?.autoApprovalEnabled || false}
-                        onChange={(e) => handleUpdateSettings({ ...settings, autoApprovalEnabled: e.target.checked })}
-                    />
+
+                {/* Секция списка пользователей */}
+                <div className="accordion-section">
+                    <button className="accordion-header" onClick={() => toggleSection('users')}>
+                        <h3>Список пользователей</h3>
+                        {expandedSections.users ? <ChevronUpIcon className="accordion-icon" /> : <ChevronDownIcon className="accordion-icon" />}
+                    </button>
+                    {expandedSections.users && (
+                        <div className="accordion-content">
+                            <table className="users-table">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя пользователя</th>
+                                    <th>Статус</th>
+                                    <th>Роли</th>
+                                    <th>Действия</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {users.map(u => (
+                                    <tr key={u.id}>
+                                        <td>{u.id}</td>
+                                        <td>{u.username}</td>
+                                        <td>{u.status}</td>
+                                        <td>{u.roles.map(r => r.name).join(', ')}</td>
+                                        <td>
+                                            {u.status === 'PENDING' && (
+                                                <button onClick={() => handleApproveUser(u.id)} className="approve-btn">Одобрить</button>
+                                            )}
+                                            {u.status === 'BLOCKED' && (
+                                                <button onClick={() => handleUnblockUser(u.id)} className="unblock-btn">Разблокировать</button>
+                                            )}
+                                            {u.id !== user.id && (
+                                                <>
+                                                    <button onClick={() => handleBlockUser(u.id)} className="block-btn">Заблокировать</button>
+                                                    <button onClick={() => handleDeleteUser(u.id)} className="delete-btn">Удалить</button>
+                                                </>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
-                <h3>Список пользователей</h3>
-                <table className="users-table">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Имя пользователя</th>
-                        <th>Статус</th>
-                        <th>Роли</th>
-                        <th>Действия</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {users.map(u => (
-                        <tr key={u.id}>
-                            <td>{u.id}</td>
-                            <td>{u.username}</td>
-                            <td>{u.status}</td>
-                            <td>{u.roles.map(r => r.name).join(', ')}</td>
-                            <td>
-                                {u.status === 'PENDING' && (
-                                    <button onClick={() => handleApproveUser(u.id)} className="approve-btn">Одобрить</button>
-                                )}
-                                <button onClick={() => handleBlockUser(u.id)} className="block-btn">Заблокировать</button>
-                                <button onClick={() => handleDeleteUser(u.id)} className="delete-btn">Удалить</button>
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-                <h3>Ручное создание пользователя</h3>
-                <div className="create-user-form">
-                    <input
-                        type="text"
-                        placeholder="Имя пользователя"
-                        value={newUser.username}
-                        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                    />
-                    <input
-                        type="password"
-                        placeholder="Пароль"
-                        value={newUser.password}
-                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    />
-                    <select multiple value={newUser.roleNames} onChange={(e) => {
-                        const selected = Array.from(e.target.selectedOptions, option => option.value);
-                        setNewUser({ ...newUser, roleNames: selected });
-                    }}>
-                        {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                    <button onClick={handleCreateUser} className="create-user-btn">Создать</button>
+
+                {/* Секция ручного создания */}
+                <div className="accordion-section">
+                    <button className="accordion-header" onClick={() => toggleSection('create')}>
+                        <h3>Ручное создание пользователя</h3>
+                        {expandedSections.create ? <ChevronUpIcon className="accordion-icon" /> : <ChevronDownIcon className="accordion-icon" />}
+                    </button>
+                    {expandedSections.create && (
+                        <div className="accordion-content">
+                            <div className="create-user-form">
+                                <input
+                                    type="text"
+                                    placeholder="Имя пользователя"
+                                    value={newUser.username}
+                                    onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Пароль"
+                                    value={newUser.password}
+                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                />
+                                <select value={newUser.roleName} onChange={(e) => setNewUser({ ...newUser, roleName: e.target.value })}>
+                                    <option value="">Выберите роль</option>
+                                    {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                                <button onClick={handleCreateUser} className="create-user-btn">Создать</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {error && <p className="error">{error}</p>}
             </div>
         </div>
     );

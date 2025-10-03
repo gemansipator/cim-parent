@@ -158,6 +158,15 @@ export const blockUser = async (id) => {
     }
 };
 
+export const unblockUser = async (id) => {
+    try {
+        const response = await api.put(`/users/${id}/unblock`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка разблокировки пользователя');
+    }
+};
+
 export const deleteUser = async (id) => {
     try {
         await api.delete(`/users/${id}`);
@@ -169,7 +178,7 @@ export const deleteUser = async (id) => {
 
 export const createUser = async (userData) => {
     try {
-        const response = await api.post('/users/create', userData);
+        const response = await api.post('/users/create', userData); // Изменено на /create для совпадения с контроллером
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.error || 'Ошибка создания пользователя');

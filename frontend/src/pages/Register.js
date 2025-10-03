@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/api';
 import { useAuthStore } from '../context/authStore';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify'; // Добавлено для уведомлений
+import { toast } from 'react-toastify';
 import '../styles/Register.css';
 
 /**
@@ -41,10 +41,10 @@ const Register = () => {
             setSuccess(response.data.message || 'Регистрация успешна! Перейдите на страницу входа.');
             setUsername('');
             setPassword('');
-            toast.success(response.data.message || 'Регистрация успешна!'); // Добавлено уведомление
+            toast.success(response.data.message || 'Регистрация успешна!'); // Точное сообщение
         } catch (err) {
             setError(err.message || 'Ошибка регистрации');
-            toast.error(err.message); // Добавлено уведомление
+            toast.error(err.message || 'Ошибка регистрации'); // Точное сообщение
         }
     };
 
