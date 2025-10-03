@@ -28,3 +28,4 @@ server:
 
 nocodb:
   url: http://nocodb:8090
+  api-key: your-nocodb-api-key
