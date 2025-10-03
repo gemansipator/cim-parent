@@ -184,6 +184,19 @@ public class UserController {
     }
 
     /**
+     * Изменить роль пользователя (для админа).
+     * @param id Идентификатор пользователя
+     * @param roleName Новая роль
+     * @return Обновленный пользователь
+     */
+    @PutMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> updateRole(@PathVariable Long id, @RequestParam String roleName) {
+        User user = userService.updateRole(id, roleName);
+        return ResponseEntity.ok(user);
+    }
+
+    /**
      * Ручное создание пользователя (для админа).
      * @param userData Данные пользователя (user: {username, password}, roleNames: список ролей)
      * @return Созданный пользователь

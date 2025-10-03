@@ -39,6 +39,9 @@ public interface UserService extends UserDetailsService {
 
     void deleteUser(Long id);
 
+    // Добавлено для смены роли
+    User updateRole(Long id, String roleName);
+
     // Добавлено для проверки глобальных настроек
     boolean isRegistrationEnabled();
 

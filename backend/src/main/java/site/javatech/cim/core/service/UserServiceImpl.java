@@ -225,6 +225,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
+     * Изменить роль пользователя (для админа).
+     * @param id Идентификатор пользователя
+     * @param roleName Новая роль
+     * @return Обновленный пользователь
+     * @throws RuntimeException Если пользователь или роль не найдена
+     */
+    @Transactional
+    public User updateRole(Long id, String roleName) {
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        Role role = roleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName));
+        user.setRoles(List.of(role)); // Single role, заменяем на новую
+        return userRepository.save(user);
+    }
+
+    /**
      * Проверка существования пользователя по имени.
      * @param username Имя пользователя
      * @return true, если пользователь существует
@@ -259,10 +274,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + username));
         // Проверка статуса при логине
         if (user.getStatus() == User.Status.PENDING) {
-            throw new UsernameNotFoundException("Дождитесь одобрения Вашей учетной записи"); // Изменено на точную фразу
+            throw new UsernameNotFoundException("Дождитесь одобрения Вашей учетной записи");
         }
         if (user.getStatus() == User.Status.BLOCKED) {
-            throw new UsernameNotFoundException("Ваша учетная запись заблокирована"); // Изменено на точную фразу
+            throw new UsernameNotFoundException("Ваша учетная запись заблокирована");
         }
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
