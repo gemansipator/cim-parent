@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import site.javatech.cim.core.model.Role;
 import site.javatech.cim.core.model.User;
@@ -189,7 +190,7 @@ public class UserController {
      */
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> manualCreateUser(@RequestBody Map<String, Object> userData) {
+    public ResponseEntity<?> manualCreateUser(@RequestBody Map<String, Object> userData) { // Изменено на ResponseEntity<?> для Map error
         try {
             @SuppressWarnings("unchecked")
             Map<String, String> userMap = (Map<String, String>) userData.get("user");
@@ -202,7 +203,7 @@ public class UserController {
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null);
+                    .body(Map.of("error", "Ошибка создания пользователя: " + e.getMessage())); // Исправлено: body Map, не User
         }
     }
 }

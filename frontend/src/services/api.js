@@ -178,10 +178,10 @@ export const deleteUser = async (id) => {
 
 export const createUser = async (userData) => {
     try {
-        const response = await api.post('/users/create', userData); // Изменено на /create для совпадения с контроллером
+        const response = await api.post('/users/create', userData); // Путь /create
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error || 'Ошибка создания пользователя');
+        throw new Error(error.response?.data?.error || 'Ошибка создания пользователя'); // Исправлено: проверка error.response.data.error
     }
 };
 
