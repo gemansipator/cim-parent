@@ -220,10 +220,8 @@ const SettingsModeration = () => {
                                                         <button onClick={() => handleBlockUser(u.id)} className="block-btn">Заблокировать</button>
                                                     )}
                                                     <button onClick={() => handleDeleteUser(u.id)} className="delete-btn">Удалить</button>
+                                                    <button onClick={() => setRoleChangeId(u.id)} className="change-role-btn">Изменить роль</button>
                                                 </>
-                                            )}
-                                            {u.id !== user.id && (
-                                                <button onClick={() => setRoleChangeId(u.id)} className="change-role-btn">Изменить роль</button>
                                             )}
                                             {roleChangeId === u.id && u.id !== user.id && (
                                                 <div className="role-change">
@@ -281,4 +279,4 @@ const SettingsModeration = () => {
     );
 };
 
-export default SettingsModer
+export default SettingsModeration;
