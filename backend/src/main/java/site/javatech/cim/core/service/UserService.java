@@ -22,7 +22,7 @@ public interface UserService extends UserDetailsService {
 
     User createUser(Map<String, Object> userData);
 
-    User createUser(User user, Set<String> roleNames);
+    User createUser(User user, List<String> roleNames); // Изменено на List<String> для совместимости с ArrayList
 
     User assignRoles(Long id, Set<String> roleNames);
 

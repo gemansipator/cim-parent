@@ -188,7 +188,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      */
     @Override
     @Transactional
-    public User createUser(User user, Set<String> roleNames) {
+    public User createUser(User user, List<String> roleNames) { // Изменено на List<String>
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Пользователь с именем " + user.getUsername() + " уже существует");
         }

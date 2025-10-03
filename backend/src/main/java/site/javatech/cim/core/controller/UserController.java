@@ -198,7 +198,7 @@ public class UserController {
             user.setUsername(userMap.get("username"));
             user.setPassword(userMap.get("password"));
             @SuppressWarnings("unchecked")
-            Set<String> roleNames = (Set<String>) userData.get("roleNames");
+            List<String> roleNames = (List<String>) userData.get("roleNames"); // Изменено на List<String>
             user = userService.createUser(user, roleNames);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
