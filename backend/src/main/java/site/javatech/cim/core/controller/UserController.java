@@ -22,7 +22,7 @@ import java.util.Set;
 
 /**
  * Контроллер для управления пользователями и аутентификацией.
- * Добавлены эндпоинты для модерации (одобрение, блокировка, удаление, ручное создание).
+ * Добавлены эндпоинты для модерации (одобрение, блокировка, разблокировка, удаление, ручное создание).
  */
 @RestController
 @RequestMapping("/api/users")
@@ -161,6 +161,18 @@ public class UserController {
     }
 
     /**
+     * Разблокировка пользователя (для админа).
+     * @param id Идентификатор пользователя
+     * @return Обновленный пользователь
+     */
+    @PutMapping("/{id}/unblock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> unblockUser(@PathVariable Long id) {
+        User user = userService.unblockUser(id);
+        return ResponseEntity.ok(user);
+    }
+
+    /**
      * Удаление пользователя (для админа).
      * @param id Идентификатор пользователя
      */
@@ -176,9 +188,9 @@ public class UserController {
      * @param userData Данные пользователя (user: {username, password}, roleNames: список ролей)
      * @return Созданный пользователь
      */
-    @PostMapping("/create")
+    @PostMapping("/manual-create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> manualCreateUser(@RequestBody Map<String, Object> userData) { // Переименован для избежания дубликата
+    public ResponseEntity<User> manualCreateUser(@RequestBody Map<String, Object> userData) {
         try {
             @SuppressWarnings("unchecked")
             Map<String, String> userMap = (Map<String, String>) userData.get("user");

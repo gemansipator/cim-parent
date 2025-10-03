@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 /**
  * Реализация сервиса для управления пользователями и аутентификации.
  * Добавлена логика модерации: статус PENDING для новых, кроме первого (админ).
- * Методы approveUser, blockUser, deleteUser для админа.
+ * Методы approveUser, blockUser, unblockUser, deleteUser для админа.
  * Интеграция с AppSettings для глобальных флагов.
  */
 @Service
@@ -152,6 +152,19 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public User blockUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
         user.setStatus(User.Status.BLOCKED);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Разблокировать пользователя (изменить статус на APPROVED).
+     * @param id Идентификатор пользователя
+     * @return Обновленный пользователь
+     * @throws IllegalArgumentException Если пользователь не найден
+     */
+    @Transactional
+    public User unblockUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        user.setStatus(User.Status.APPROVED);
         return userRepository.save(user);
     }
 

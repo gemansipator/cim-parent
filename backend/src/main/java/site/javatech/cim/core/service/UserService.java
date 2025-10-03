@@ -35,6 +35,8 @@ public interface UserService extends UserDetailsService {
 
     User blockUser(Long id);
 
+    User unblockUser(Long id); // Добавлено для разблокировки
+
     void deleteUser(Long id);
 
     // Добавлено для проверки глобальных настроек
