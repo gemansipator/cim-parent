@@ -27,9 +27,7 @@ import {
     ExclamationTriangleIcon,
     ShieldCheckIcon,
     SunIcon,
-    MoonIcon,
-    UserPlusIcon,
-    UserGroupIcon
+    MoonIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import '../styles/Dashboard.css';
@@ -46,10 +44,10 @@ const Dashboard = () => {
     const [statuses, setStatuses] = useState([]);
     const [bbbSessions, setBbbSessions] = useState([]);
     const [settingsModeration, setSettingsModeration] = useState(null);
-    const [users, setUsers] = useState([]); // Добавлено для списка пользователей
-    const [settings, setSettings] = useState(null); // Добавлено для глобальных настроек
-    const [newUser, setNewUser] = useState({ username: '', password: '', roleNames: [] }); // Добавлено для ручного создания
-    const [availableRoles] = useState(['ADMIN', 'SUPERUSER', 'USER']); // Добавлено для ролей
+    const [users, setUsers] = useState([]); // Для списка пользователей
+    const [settings, setSettings] = useState(null); // Для глобальных настроек
+    const [newUser, setNewUser] = useState({ username: '', password: '', roleNames: [] }); // Для ручного создания
+    const [availableRoles] = useState(['ADMIN', 'SUPERUSER', 'USER']); // Доступные роли
     const [error, setError] = useState('');
 
     // Тема: при инициализации читаем значение из localStorage
@@ -110,7 +108,7 @@ const Dashboard = () => {
             }
         };
 
-        // Добавлено: Загрузка пользователей и настроек для админа
+        // Загрузка пользователей и настроек для админа
         const fetchAdminData = async () => {
             if (user?.roles?.some(r => ['ADMIN', 'SUPERUSER'].includes(r.name))) {
                 try {
@@ -132,7 +130,7 @@ const Dashboard = () => {
         fetchAdminData();
     }, [navigate, token, username, user, logout]);
 
-    // Добавлено: Обработчики для модерации пользователей
+    // Обработчики для модерации пользователей
     const handleApproveUser = async (id) => {
         try {
             const updatedUser = await approveUser(id);
@@ -165,7 +163,7 @@ const Dashboard = () => {
         }
     };
 
-    // Добавлено: Обработчик для ручного создания пользователя
+    // Обработчик для ручного создания пользователя
     const handleCreateUser = async () => {
         if (!newUser.username || !newUser.password) {
             toast.error('Заполните имя пользователя и пароль');
@@ -188,7 +186,7 @@ const Dashboard = () => {
         }
     };
 
-    // Добавлено: Обработчик для обновления настроек
+    // Обработчик для обновления настроек
     const handleUpdateSettings = async (updatedSettings) => {
         try {
             const newSettings = await updateSettings(updatedSettings);
@@ -205,7 +203,7 @@ const Dashboard = () => {
         { id: 'requirements', name: 'Требования', icon: ClipboardDocumentListIcon },
         { id: 'statuses', name: 'Статусы', icon: CheckCircleIcon },
         { id: 'bbbSessions', name: 'BBB Сессии', icon: VideoCameraIcon },
-        { id: 'settingsModeration', name: 'Настройки и модерация', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER'] },
+        { id: 'userModeration', name: 'Настройки и модерация', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER'] }, // Изменено id на 'userModeration'
         { id: 'nocodb', name: 'NocoDB', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER', 'USER'] }
     ].filter(module => !module.roles || module.roles.some(role => user?.roles?.map(r => r.name).includes(role)));
 
