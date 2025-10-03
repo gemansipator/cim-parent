@@ -190,7 +190,7 @@ public class UserController {
      */
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> manualCreateUser(@RequestBody Map<String, Object> userData) { // Изменено на ResponseEntity<?> для Map error
+    public ResponseEntity<?> manualCreateUser(@RequestBody Map<String, Object> userData) {
         try {
             @SuppressWarnings("unchecked")
             Map<String, String> userMap = (Map<String, String>) userData.get("user");

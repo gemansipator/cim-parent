@@ -22,7 +22,7 @@ public interface UserService extends UserDetailsService {
 
     User createUser(Map<String, Object> userData);
 
-    User createUser(User user, List<String> roleNames); // Изменено на List<String> для совместимости с ArrayList
+    User createUser(User user, List<String> roleNames);
 
     User assignRoles(Long id, Set<String> roleNames);
 
@@ -35,7 +35,7 @@ public interface UserService extends UserDetailsService {
 
     User blockUser(Long id);
 
-    User unblockUser(Long id); // Добавлено для разблокировки
+    User unblockUser(Long id);
 
     void deleteUser(Long id);
 

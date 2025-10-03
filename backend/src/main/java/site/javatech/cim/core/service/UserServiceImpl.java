@@ -259,10 +259,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + username));
         // Проверка статуса при логине
         if (user.getStatus() == User.Status.PENDING) {
-            throw new UsernameNotFoundException("Ваш аккаунт ожидает одобрения администратором");
+            throw new UsernameNotFoundException("Дождитесь одобрения Вашей учетной записи"); // Изменено на точную фразу
         }
         if (user.getStatus() == User.Status.BLOCKED) {
-            throw new UsernameNotFoundException("Ваш аккаунт заблокирован администратором");
+            throw new UsernameNotFoundException("Ваша учетная запись заблокирована"); // Изменено на точную фразу
         }
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
