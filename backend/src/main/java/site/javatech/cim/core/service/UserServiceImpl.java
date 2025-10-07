@@ -196,7 +196,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setStatus(User.Status.APPROVED); // Ручное добавление — сразу одобрено
         List<Role> roles = roleNames.stream()
                 .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
+                        .orElseGet(() -> {
+                            Role newRole = new Role();
+                            newRole.setName(roleName);
+                            return roleRepository.save(newRole);
+                        })) // Добавлено: создание роли, если не найдена
                 .collect(Collectors.toList());
         user.setRoles(roles);
         return userRepository.save(user);
@@ -218,7 +222,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         }
         List<Role> roles = roleNames.stream()
                 .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName)))
+                        .orElseGet(() -> {
+                            Role newRole = new Role();
+                            newRole.setName(roleName);
+                            return roleRepository.save(newRole);
+                        })) // Добавлено: создание роли, если не найдена
                 .collect(Collectors.toList());
         user.setRoles(roles);
         return userRepository.save(user);
@@ -229,12 +237,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * @param id Идентификатор пользователя
      * @param roleName Новая роль
      * @return Обновленный пользователь
-     * @throws RuntimeException Если пользователь или роль не найдена
+     * @throws RuntimeException Если пользователь не найден
      */
     @Transactional
     public User updateRole(Long id, String roleName) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-        Role role = roleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName));
+        Role role = roleRepository.findByName(roleName).orElseGet(() -> {
+            Role newRole = new Role();
+            newRole.setName(roleName);
+            return roleRepository.save(newRole);
+        }); // Добавлено: создание роли, если не найдена
         user.setRoles(List.of(role)); // Single role, заменяем на новую
         return userRepository.save(user);
     }
