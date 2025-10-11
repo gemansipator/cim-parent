@@ -1,3 +1,7 @@
+/**
+ * Сервис для взаимодействия с бэкендом через API.
+ * Добавлены методы для работы с чатом и статусами пользователей.
+ */
 import axios from 'axios';
 
 const api = axios.create({
@@ -130,7 +134,6 @@ export const getBbbSessions = async () => {
     }
 };
 
-// Добавлено: Методы для модерации пользователей
 export const getAllUsers = async () => {
     try {
         const response = await api.get('/users');
@@ -176,7 +179,7 @@ export const deleteUser = async (id) => {
     }
 };
 
-export const updateRole = async (id, roleName) => { // Добавлено для смены роли
+export const updateRole = async (id, roleName) => {
     try {
         const response = await api.put(`/users/${id}/role?roleName=${roleName}`);
         return response.data;
@@ -209,5 +212,32 @@ export const updateSettings = async (settings) => {
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.error || 'Ошибка обновления настроек');
+    }
+};
+
+export const getChatMessages = async (page, size) => {
+    try {
+        const response = await api.get(`/chat/messages?page=${page}&size=${size}`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка получения сообщений чата');
+    }
+};
+
+export const getUserStatuses = async () => {
+    try {
+        const response = await api.get('/user-statuses');
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка получения статусов пользователей');
+    }
+};
+
+export const updateUserStatus = async (status) => {
+    try {
+        const response = await api.post('/user-statuses', status);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка обновления статуса пользователя');
     }
 };
