@@ -20,11 +20,17 @@ import {
     ExclamationTriangleIcon,
     ShieldCheckIcon,
     SunIcon,
-    MoonIcon
+    MoonIcon,
+    ChatBubbleLeftIcon
 } from '@heroicons/react/24/outline';
 import '../styles/Dashboard.css';
 import SettingsModeration from "./SettingsModeration";
+import Chat from "./Chat";
 
+/**
+ * Компонент Dashboard — главный дашборд приложения.
+ * Модуль 'userModeration' теперь загружает полный компонент SettingsModeration.
+ */
 const Dashboard = () => {
     const [activeModule, setActiveModule] = useState('bimModels');
     const [modules, setModules] = useState([]);
@@ -35,7 +41,10 @@ const Dashboard = () => {
     const [settingsModeration, setSettingsModeration] = useState(null);
     const [error, setError] = useState('');
 
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+    // Тема: при инициализации читаем значение из localStorage
+    const [darkMode, setDarkMode] = useState(() => {
+        return localStorage.getItem('darkMode') === 'true';
+    });
 
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
@@ -43,7 +52,6 @@ const Dashboard = () => {
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
 
-    // Загрузка данных пользователя и модулей
     useEffect(() => {
         if (!token || !username) {
             navigate('/login');
@@ -94,9 +102,9 @@ const Dashboard = () => {
         fetchUser();
         fetchData();
         fetchSettingsModeration();
-    }, [navigate, token, username, logout, user]);
+    }, [navigate, token, username, user, logout]);
 
-    // Фильтрация модулей по ролям пользователя
+    // Список доступных модулей
     const moduleList = [
         { id: 'modules', name: 'Модули', icon: CogIcon },
         { id: 'bimModels', name: 'BIM Модели', icon: CubeIcon },
@@ -104,9 +112,11 @@ const Dashboard = () => {
         { id: 'statuses', name: 'Статусы', icon: CheckCircleIcon },
         { id: 'bbbSessions', name: 'BBB Сессии', icon: VideoCameraIcon },
         { id: 'userModeration', name: 'Настройки и модерация', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER'] },
+        { id: 'chat', name: 'Чат', icon: ChatBubbleLeftIcon, roles: ['ADMIN', 'SUPERUSER', 'USER'] },
         { id: 'nocodb', name: 'NocoDB', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER', 'USER'] }
     ].filter(module => !module.roles || module.roles.some(role => user?.roles?.map(r => r.name).includes(role)));
 
+    // Отображение, если нет данных
     const noData = () => (
         <div className="module-empty">
             <ExclamationTriangleIcon className="module-empty-icon" />
@@ -114,6 +124,7 @@ const Dashboard = () => {
         </div>
     );
 
+    // Контент модулей
     const moduleContent = {
         modules: modules.length ? modules.map(m => <p key={m.id}>{m.name}: {m.description}</p>) : noData(),
         bimModels: bimModels.length ? bimModels.map(m => <p key={m.id}>{m.name} ({m.filePath})</p>) : noData(),
@@ -137,6 +148,7 @@ const Dashboard = () => {
                 style={{ width: '100%', height: '80vh', border: 'none', borderRadius: '8px' }}
             />
         ),
+        // Модуль модерации пользователей
         userModeration: user?.roles?.some(r => ['ADMIN', 'SUPERUSER'].includes(r.name)) ? (
             <SettingsModeration />
         ) : (
@@ -144,9 +156,16 @@ const Dashboard = () => {
                 <ExclamationTriangleIcon className="module-empty-icon" />
                 <p>Доступ только для администратора</p>
             </div>
+        ),
+        // Модуль чата
+        chat: (
+            <div style={{ width: '100%', height: '70vh', overflow: 'auto' }}>
+                <Chat />
+            </div>
         )
     };
 
+    // Переключение темы
     useEffect(() => {
         if (darkMode) {
             document.body.classList.add('dark-mode');
@@ -211,13 +230,14 @@ const Dashboard = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -50 }}
                                 transition={{ duration: 0.4, ease: 'easeInOut' }}
+                                style={{ display: 'flex', flexDirection: 'column' }}
                             >
-                                {activeModule !== 'nocodb' && (
+                                {activeModule !== 'nocodb' && activeModule !== 'chat' && (
                                     <h2 className="module-content-title">
                                         {moduleList.find(m => m.id === activeModule)?.name}
                                     </h2>
                                 )}
-                                <div className="module-content-details">
+                                <div className="module-content-details" style={{ flex: 1 }}>
                                     {moduleContent[activeModule]}
                                 </div>
                             </motion.div>
