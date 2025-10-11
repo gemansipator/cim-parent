@@ -1,7 +1,7 @@
 /**
  * Инициализатор данных приложения ЦИМ.
- * Выполняет начальную настройку ролей и модулей.
- * Добавлен модуль "Чат".
+ * Выполняет начальную настройку ролей, модулей и таблиц для чата и статусов пользователей.
+ * Добавлено создание таблиц chat_messages и user_statuses.
  */
 package site.javatech.cim.core.init;
 
@@ -29,20 +29,61 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        // Создание таблиц для чата и статусов пользователей
+        initTables();
+
+        // Проверка состояния таблицы users
         Long userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Long.class);
         Long invalidUsers = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM users WHERE username IS NULL OR username = ''", Long.class);
 
+        // Очистка таблиц и сброс автоинкремента
         if (userCount == 0 || invalidUsers > 0) {
             jdbcTemplate.update("DELETE FROM user_roles");
             jdbcTemplate.update("DELETE FROM users");
             jdbcTemplate.update("ALTER SEQUENCE users_id_seq RESTART WITH 1");
         }
 
+        // Инициализация ролей
         initRoles();
+
+        // Инициализация модулей
         initModules();
     }
 
+    /**
+     * Создание таблиц для чата и статусов пользователей.
+     */
+    private void initTables() {
+        // Создание таблицы chat_messages
+        jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS chat_messages (" +
+                        "id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
+                        "content TEXT NOT NULL," +
+                        "sender_username VARCHAR(255) NOT NULL," +
+                        "timestamp TIMESTAMP NOT NULL," +
+                        "reply_to_id BIGINT," +
+                        "recipient_id BIGINT," +
+                        "room_id BIGINT," +
+                        "deleted BOOLEAN NOT NULL DEFAULT false," +
+                        "FOREIGN KEY (sender_username) REFERENCES users(username)" +
+                        ")"
+        );
+
+        // Создание таблицы user_statuses
+        jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS user_statuses (" +
+                        "user_id BIGINT PRIMARY KEY," +
+                        "online BOOLEAN NOT NULL," +
+                        "last_active TIMESTAMP NOT NULL," +
+                        "FOREIGN KEY (user_id) REFERENCES users(id)" +
+                        ")"
+        );
+    }
+
+    /**
+     * Инициализация ролей в базе данных.
+     */
     private void initRoles() {
         Long userCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Long.class);
         if (userCount == 0) {
@@ -55,6 +96,11 @@ public class DataInitializer implements CommandLineRunner {
         saveRoleWithFixedId(3L, "USER");
     }
 
+    /**
+     * Сохранение роли с фиксированным ID.
+     * @param id Идентификатор роли
+     * @param name Название роли
+     */
     private void saveRoleWithFixedId(Long id, String name) {
         jdbcTemplate.update(
                 "INSERT INTO roles (id, name) VALUES (?, ?) " +
@@ -63,6 +109,9 @@ public class DataInitializer implements CommandLineRunner {
         );
     }
 
+    /**
+     * Инициализация модулей в базе данных.
+     */
     private void initModules() {
         if (moduleRepository.count() == 0) {
             jdbcTemplate.update("DELETE FROM modules");

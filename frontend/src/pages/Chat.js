@@ -2,15 +2,18 @@
  * Компонент страницы чата.
  * Реализует общий чат с полем ввода, отправкой по Enter/кнопке, отображением ника, времени, смайликов,
  * активных ссылок, ответов на сообщения, анимацией сообщений и списком пользователей с статусами.
+ * Добавлена поддержка выбора смайликов через emoji-picker-react.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import EmojiPicker from 'emoji-picker-react';
 import { useAuthStore } from '../context/authStore';
 import { toast } from 'react-toastify';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { ChatIcon, TrashIcon, ReplyIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
-import { getAllUsers, approveUser, blockUser, unblockUser, deleteUser, getUserByUsername } from '../services/api';
+// Заменили ReplyIcon -> ArrowUturnLeftIcon для @heroicons/react v2
+import { ChatBubbleLeftIcon, TrashIcon, ArrowUturnLeftIcon, ShieldCheckIcon, FaceSmileIcon } from '@heroicons/react/24/outline';
+import { getAllUsers, approveUser, blockUser, unblockUser, deleteUser } from '../services/api';
 import '../styles/Chat.css';
 
 const Chat = () => {
@@ -22,6 +25,7 @@ const Chat = () => {
     const [hasMore, setHasMore] = useState(true);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [replyTo, setReplyTo] = useState(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { user } = useAuthStore();
     const chatRef = useRef(null);
     const stompClient = useRef(null);
@@ -86,6 +90,7 @@ const Chat = () => {
         };
 
         initializeChat();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, user]);
 
     const scrollToBottom = () => {
@@ -101,12 +106,20 @@ const Chat = () => {
             senderUsername: user.username,
             replyToId: replyTo?.id || null
         };
-        stompClient.current.publish({
-            destination: '/app/chat.sendMessage',
-            body: JSON.stringify(message)
-        });
+        try {
+            stompClient.current.publish({
+                destination: '/app/chat.sendMessage',
+                body: JSON.stringify(message)
+            });
+        } catch (err) {
+            // Если stompClient ещё не активен, можно fallback'ить на fetch (если у тебя есть endpoint)
+            console.error('Ошибка отправки через STOMP', err);
+            toast.error('Ошибка отправки сообщения');
+            return;
+        }
         setNewMessage('');
         setReplyTo(null);
+        setShowEmojiPicker(false);
     };
 
     const handleKeyPress = (e) => {
@@ -170,6 +183,12 @@ const Chat = () => {
         return content.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     };
 
+    const onEmojiClick = (emojiObject) => {
+        // emoji-picker-react v4: onEmojiClick(emojiObject) — emojiObject.emoji содержит символ
+        setNewMessage(prev => prev + emojiObject.emoji);
+        setShowEmojiPicker(false);
+    };
+
     return (
         <div className="chat-container">
             <div className="chat-main">
@@ -192,11 +211,11 @@ const Chat = () => {
                                 >
                                     <div className="message-header">
                                         <span className="message-sender">{msg.senderUsername}</span>
-                                        <span className="message-time">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                        <span className="message-time">{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''}</span>
                                     </div>
                                     {msg.replyToId && (
                                         <div className="message-reply">
-                                            <ReplyIcon className="reply-icon" />
+                                            <ArrowUturnLeftIcon className="reply-icon" />
                                             <span>В ответ на сообщение #{msg.replyToId}</span>
                                         </div>
                                     )}
@@ -209,7 +228,7 @@ const Chat = () => {
                                                     onClick={() => setReplyTo(msg)}
                                                     title="Ответить"
                                                 >
-                                                    <ReplyIcon />
+                                                    <ArrowUturnLeftIcon />
                                                 </button>
                                             )}
                                             {(msg.senderUsername === user.username || user.roles.some(r => r.name === 'ADMIN')) && (
@@ -235,21 +254,37 @@ const Chat = () => {
                     </div>
                 )}
                 <div className="chat-input">
-          <textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Введите сообщение..."
-          />
+                    <textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Введите сообщение..."
+                    />
+                    <motion.button
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="emoji-btn"
+                        type="button"
+                        title="Открыть выбор смайлов"
+                    >
+                        <FaceSmileIcon />
+                    </motion.button>
                     <motion.button
                         onClick={handleSendMessage}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="send-btn"
+                        type="button"
                     >
                         Отправить
                     </motion.button>
                 </div>
+                {showEmojiPicker && (
+                    <div className="emoji-picker">
+                        <EmojiPicker onEmojiClick={onEmojiClick} />
+                    </div>
+                )}
             </div>
             <div className="chat-users">
                 <h3>Пользователи</h3>
