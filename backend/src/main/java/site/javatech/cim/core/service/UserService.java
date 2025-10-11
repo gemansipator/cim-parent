@@ -1,3 +1,8 @@
+/**
+ * Интерфейс сервиса для управления пользователями.
+ * Добавлены методы для модерации и проверки настроек.
+ * Добавлен метод getUserIdByUsername для чата.
+ */
 package site.javatech.cim.core.service;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -8,10 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Интерфейс сервиса для управления пользователями.
- * Добавлены методы для модерации и проверки настроек.
- */
 public interface UserService extends UserDetailsService {
 
     List<User> getAllUsers();
@@ -46,4 +47,7 @@ public interface UserService extends UserDetailsService {
     boolean isRegistrationEnabled();
 
     boolean isAutoApprovalEnabled();
+
+    // Добавлено для чата
+    Long getUserIdByUsername(String username);
 }
