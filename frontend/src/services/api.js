@@ -129,3 +129,85 @@ export const getBbbSessions = async () => {
         throw new Error(error.response?.data?.error || 'Ошибка получения BBB-сессий');
     }
 };
+
+// Добавлено: Методы для модерации пользователей
+export const getAllUsers = async () => {
+    try {
+        const response = await api.get('/users');
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка получения списка пользователей');
+    }
+};
+
+export const approveUser = async (id) => {
+    try {
+        const response = await api.put(`/users/${id}/approve`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка одобрения пользователя');
+    }
+};
+
+export const blockUser = async (id) => {
+    try {
+        const response = await api.put(`/users/${id}/block`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка блокировки пользователя');
+    }
+};
+
+export const unblockUser = async (id) => {
+    try {
+        const response = await api.put(`/users/${id}/unblock`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка разблокировки пользователя');
+    }
+};
+
+export const deleteUser = async (id) => {
+    try {
+        await api.delete(`/users/${id}`);
+        return true;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка удаления пользователя');
+    }
+};
+
+export const updateRole = async (id, roleName) => { // Добавлено для смены роли
+    try {
+        const response = await api.put(`/users/${id}/role?roleName=${roleName}`);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка смены роли');
+    }
+};
+
+export const createUser = async (userData) => {
+    try {
+        const response = await api.post('/users/create', userData);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка создания пользователя');
+    }
+};
+
+export const getSettings = async () => {
+    try {
+        const response = await api.get('/settings');
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка получения настроек');
+    }
+};
+
+export const updateSettings = async (settings) => {
+    try {
+        const response = await api.put('/settings', settings);
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Ошибка обновления настроек');
+    }
+};

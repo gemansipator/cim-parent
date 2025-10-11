@@ -23,15 +23,11 @@ import {
     MoonIcon
 } from '@heroicons/react/24/outline';
 import '../styles/Dashboard.css';
+import SettingsModeration from "./SettingsModeration";
 
 /**
  * Компонент Dashboard — главный дашборд приложения.
- * Здесь происходит:
- * - загрузка и отображение данных из API,
- * - выбор активного модуля для просмотра,
- * - переключение между светлой и темной темами,
- * - показ имени пользователя и кнопки выхода,
- * - встроенный iframe с NocoDB для админов.
+ * Модуль 'userModeration' теперь загружает полный компонент SettingsModeration.
  */
 const Dashboard = () => {
     const [activeModule, setActiveModule] = useState('bimModels');
@@ -112,7 +108,7 @@ const Dashboard = () => {
         { id: 'requirements', name: 'Требования', icon: ClipboardDocumentListIcon },
         { id: 'statuses', name: 'Статусы', icon: CheckCircleIcon },
         { id: 'bbbSessions', name: 'BBB Сессии', icon: VideoCameraIcon },
-        { id: 'settingsModeration', name: 'Настройки и модерация', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER'] },
+        { id: 'userModeration', name: 'Настройки и модерация', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER'] },
         { id: 'nocodb', name: 'NocoDB', icon: ShieldCheckIcon, roles: ['ADMIN', 'SUPERUSER', 'USER'] }
     ].filter(module => !module.roles || module.roles.some(role => user?.roles?.map(r => r.name).includes(role)));
 
@@ -145,6 +141,15 @@ const Dashboard = () => {
                 title="NocoDB Interface"
                 style={{ width: '100%', height: '80vh', border: 'none', borderRadius: '8px' }}
             />
+        ),
+        // Добавлено: Модуль модерации пользователей
+        userModeration: user?.roles?.some(r => ['ADMIN', 'SUPERUSER'].includes(r.name)) ? (
+            <SettingsModeration />
+        ) : (
+            <div className="module-empty">
+                <ExclamationTriangleIcon className="module-empty-icon" />
+                <p>Доступ только для администратора</p>
+            </div>
         )
     };
 

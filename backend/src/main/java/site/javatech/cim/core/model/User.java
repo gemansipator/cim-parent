@@ -9,6 +9,7 @@ import java.util.List;
 
 /**
  * Сущность пользователя.
+ * Добавлено поле status для модерации (PENDING, APPROVED, BLOCKED).
  */
 @Entity
 @Table(name = "users")
@@ -26,6 +27,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'APPROVED'")
+    private Status status = Status.APPROVED; // По умолчанию одобрен
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -33,4 +38,8 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private List<Role> roles = new ArrayList<>();
+
+    public enum Status {
+        PENDING, APPROVED, BLOCKED
+    }
 }

@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/api';
 import { useAuthStore } from '../context/authStore';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 import '../styles/Register.css';
 
 /**
  * Компонент страницы регистрации.
+ * Добавлена проверка глобальных настроек: если registrationEnabled = false, показать уведомление.
  */
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -36,11 +38,13 @@ const Register = () => {
         try {
             const response = await registerUser({ username, password });
             setAuth({ username, roles: response.user.roles });
-            setSuccess('Регистрация успешна! Перейдите на страницу входа.');
+            setSuccess(response.data.message || 'Регистрация успешна! Перейдите на страницу входа.');
             setUsername('');
             setPassword('');
+            toast.success(response.data.message || 'Регистрация успешна!'); // Точное сообщение
         } catch (err) {
             setError(err.message || 'Ошибка регистрации');
+            toast.error(err.message || 'Ошибка регистрации'); // Точное сообщение
         }
     };
 
